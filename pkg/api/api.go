@@ -8,6 +8,7 @@ import (
 
 	"github.com/kott/go-service-example/pkg/db"
 	articles "github.com/kott/go-service-example/pkg/services/articles/transport"
+	users "github.com/kott/go-service-example/pkg/services/users/transport"
 	"github.com/kott/go-service-example/pkg/utils/log"
 	"github.com/kott/go-service-example/pkg/utils/middleware"
 )
@@ -44,6 +45,7 @@ func Start(cfg *Config) {
 	}()
 
 	if cfg.RunMigration && conn != nil {
+		// 如何使用golang-migrate进行迁移 https://a2htray.github.io/2021/02/06/golang-migrate-usage-with-postgresql/
 		if err := db.Migrate(conn, cfg.DBName); err != nil {
 			log.Error(ctx, "unable to complete auto migration", err.Error())
 		}
@@ -60,6 +62,7 @@ func Start(cfg *Config) {
 	router.NoMethod(middleware.NoMethod())
 
 	articles.Activate(router, conn)
+	users.Activate(router, conn)
 
 	if err := router.Run(fmt.Sprintf("%s:%d", cfg.AppHost, cfg.AppPort)); err != nil {
 		log.Fatal(context.Background(), err.Error())
