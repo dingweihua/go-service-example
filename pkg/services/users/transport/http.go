@@ -42,7 +42,27 @@ func (h *handler) Get(c *gin.Context) {
 }
 
 func (h *handler) GetAll(c *gin.Context) {
+	ctx := context.GetReqCtx(c)
 
+	var param struct {
+		Limit int `form:"limit,default=10"`
+		Offset int `form:"offset,default=0"`
+	}
+	if err := c.BindQuery(&param); err != nil {
+		log.Error(ctx, "limit or offset not provided in query, %v", param)
+		c.IndentedJSON(http.StatusBadRequest, errors.NewAppError(errors.BadRequest, errors.Descriptions[errors.BadRequest], ""))
+		return
+	}
+
+	log.Info(ctx, "get all users with limit=%d, offset=%d", param.Limit, param.Offset)
+	ul, err := h.us.GetAll(ctx, param.Limit, param.Offset)
+	if err != nil {
+		code, appErr := handleError(err)
+		c.IndentedJSON(code, appErr)
+		return
+	}
+	// 这里在JSON中再包一层key users
+	c.IndentedJSON(http.StatusOK, users.Users{Users: ul})
 }
 
 func (h *handler) Create(c *gin.Context) {
